@@ -3,7 +3,7 @@ var app = express();
 var server = require("http").createServer(app);
 var io = require("socket.io").listen(server);
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 8080);
 
 function player(in_username, in_password, in_status, in_opponent, in_rank, in_exp, in_win, in_lose, in_history, in_friend){
 	this.username = in_username; // tên đăng nhập
