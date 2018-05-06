@@ -1,9 +1,8 @@
 var express = require("express");
-var fs = require('fs');
 var app = express();
 var server = require("http").createServer(app);
 var io = require("socket.io").listen(server);
-
+var fs = require("fs");
 server.listen(process.env.PORT || 8080);
 
 function player(in_username, in_password, in_status, in_opponent, in_rank, in_exp, in_win, in_lose, in_history, in_friend){
@@ -279,51 +278,63 @@ io.sockets.on('connection', function(socket){
 			// player1: người chơi đã bấm tìm ngẫu nhiên
 			// player2: người chơi tìm đượcs
 			var opponent = "none";
-			var x;
-			var y;
+			var x = "";
+			var y = "";
 			var found = false;
-			do{
-				var i = getRndInteger(0, playerList.length);
-				opponent = "none";
-				x = "";
-				y = "";
-				if(i>=0&&i<=playerList.length){
-					var currentPlayerStatus = playerList[i].getStatus();
-					if(currentPlayerStatus == "online" && currentPlayerStatus != "busy"){
-						var currentPlayerUsername = playerList[i].getUsername();
-						if(currentPlayerUsername != data){
-							// Tìm thấy người chơi phù hợp (player2)
-							// set đối thủ của player2 là player1
-							// set trạng thái lúc này là busy
-							found = true;
-							playerList[i].setOpponent(data);
-							playerList[i].setHistory(data);
-							playerList[i].addResultInHistory("O");
-							var newStatus = "busy";
-							playerList[i].setStatus("busy");
-							y = playerList[i].getOpponent();
-							y = y+"-O-"+playerList[i].getStatus();
-							opponent = currentPlayerUsername;
-							for(var j = 0; j<playerList.length; j++){
-								var currentPlayer = playerList[j];
-								if(currentPlayer.getUsername() == data){
-									// set đối thủ của player1 là player2
-									playerList[j].setOpponent(opponent);
-									playerList[j].setHistory(opponent);
-									playerList[j].addResultInHistory("X");
-									playerList[j].setStatus("busy");
-									x = playerList[j].getOpponent();
-									x = x+"-X-"+playerList[j].getStatus();
+			var count = 0;
+			for(var i = 0; i<playerList.length; i++){
+				if(playerList[i].getStatus()=="online")
+					count = count + 1;
+			}
+			//console.log(count);
+			if(count >1){
+				do{
+					var i = getRndInteger(0, playerList.length);
+					opponent = "none";
+					x = "";
+					y = "";
+					if(i>=0&&i<=playerList.length){
+						var currentPlayerStatus = playerList[i].getStatus();
+						if(currentPlayerStatus == "online" && currentPlayerStatus != "busy"){
+							var currentPlayerUsername = playerList[i].getUsername();
+							if(currentPlayerUsername != data){
+								// Tìm thấy người chơi phù hợp (player2)
+								// set đối thủ của player2 là player1
+								// set trạng thái lúc này là busy
+								found = true;
+								playerList[i].setOpponent(data);
+								playerList[i].setHistory(data);
+								playerList[i].addResultInHistory("O");
+								var newStatus = "busy";
+								playerList[i].setStatus("busy");
+								y = playerList[i].getOpponent();
+								y = y+"-O-"+playerList[i].getStatus();
+								opponent = currentPlayerUsername;
+								for(var j = 0; j<playerList.length; j++){
+									var currentPlayer = playerList[j];
+									if(currentPlayer.getUsername() == data){
+										// set đối thủ của player1 là player2
+										playerList[j].setOpponent(opponent);
+										playerList[j].setHistory(opponent);
+										playerList[j].addResultInHistory("X");
+										playerList[j].setStatus("busy");
+										x = playerList[j].getOpponent();
+										x = x+"-X-"+playerList[j].getStatus();
+									}
 								}
-							}
-						}	
+							}	
+						}
 					}
-				}
-			}while(found == false);
-			// gởi thông tin về cho player1 username của player2
-			socket.emit('FindRandomPlayerFeedback', {feedback:x});
-			// gởi thông tin về cho player2 username của player1
-			io.to(users[opponent]).emit('FindRandomPlayerFeedback', {feedback:y});
+				}while(found == false);
+				// gởi thông tin về cho player1 username của player2
+				socket.emit('FindRandomPlayerFeedback', {feedback:x});
+				// gởi thông tin về cho player2 username của player1
+				io.to(users[opponent]).emit('FindRandomPlayerFeedback', {feedback:y});
+			}else{
+				socket.emit('FindRandomPlayerFeedback', {feedback:x});
+			}
+			
+			
 		
 	});
 
@@ -550,7 +561,7 @@ io.sockets.on('connection', function(socket){
 			}
 			//delete users[data];
 			var x = "Nguoi choi: " + data + "- offline";
-			console.log(x);
+			//console.log(x);
 			//socket.emit('GoingOfflineFeedback', {feedback:x});
 		}
 	});
